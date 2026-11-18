@@ -9,20 +9,15 @@ import { QuickTestTargets } from "@/components/QuickTestTargets";
 import { AuditsFeed } from "@/components/AuditsFeed";
 import { ScanResults } from "@/components/ScanResults";
 import { Footer } from "@/components/Footer";
-import {
-  defaultFlags,
-  extractRiskScore,
-  formatClock,
-  threatFromScore,
-} from "@/lib/audit-helpers";
+import { formatClock } from "@/lib/audit-helpers";
 import { isAddressValidForChain, type ChainId } from "@/lib/validation";
-import type { AuditFeedItem, QuickTarget, ScanResult } from "@/lib/types";
+import type { AuditFeedItem, AuditReport, QuickTarget } from "@/lib/types";
 
 export default function Web3RiskDashboard() {
   const [address, setAddress] = useState("");
   const [chain, setChain] = useState<ChainId>("solana");
   const [loading, setLoading] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<AuditReport | null>(null);
   const [copied, setCopied] = useState(false);
   const [feed, setFeed] = useState<AuditFeedItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -56,31 +51,28 @@ export default function Web3RiskDashboard() {
         throw new Error(data.error || "Audit failed");
       }
 
-      const riskScore = extractRiskScore(String(data.answer ?? ""));
-      const threatLevel = threatFromScore(riskScore);
+      const report = data.report as AuditReport | undefined;
+      if (!report || !report.verdict || !Array.isArray(report.flags)) {
+        throw new Error("Incomplete audit response from server.");
+      }
+
       const timestamp = formatClock();
+      setScanResult(report);
 
-      setScanResult({
-        address: targetAddress.trim(),
-        chain: targetChain.toUpperCase(),
-        status: riskScore >= 60 ? "HIGH_THREAT_INDEX" : "CLEARED_WITH_NOTES",
-        threatLevel,
-        riskScore,
-        aiAnalysis: data.answer,
-        flags: defaultFlags(riskScore),
-      });
-
-      setFeed((prev) => [
-        {
-          id: `${Date.now()}-${targetAddress.slice(0, 8)}`,
-          address: targetAddress.trim(),
-          chain: targetChain,
-          riskScore,
-          threatLevel,
-          timestamp,
-        },
-        ...prev,
-      ].slice(0, 12));
+      setFeed((prev) =>
+        [
+          {
+            id: `${Date.now()}-${targetAddress.slice(0, 8)}`,
+            address: targetAddress.trim(),
+            chain: targetChain,
+            riskScore: report.riskScore,
+            threatLevel: report.threatLevel,
+            verdict: report.verdict,
+            timestamp,
+          },
+          ...prev,
+        ].slice(0, 12)
+      );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Audit failed";
       setError(message);
@@ -95,7 +87,6 @@ export default function Web3RiskDashboard() {
   };
 
   const handleQuickTarget = async (target: QuickTarget) => {
-    // Paint chain tab + address before the audit request starts
     flushSync(() => {
       setAddress(target.address);
       setChain(target.chain);
@@ -113,6 +104,10 @@ export default function Web3RiskDashboard() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
         <Header />
+
+        <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-xs font-mono text-cyan-200/90">
+          Paste-only scan — we never ask for your seed phrase or a wallet connection.
+        </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <ChainSelector chain={chain} onChange={setChain} />

@@ -8,7 +8,7 @@ type Props = {
 
 const toneClass: Record<QuickTarget["tone"], string> = {
   safe: "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10",
-  risk: "border-rose-500/40 text-rose-300 hover:bg-rose-500/10",
+  demo: "border-amber-500/40 text-amber-300 hover:bg-amber-500/10",
   live: "border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10",
 };
 

@@ -8,6 +8,7 @@ Before any code change, read `docs/PROJECT_MEMORY.md` end-to-end and treat it as
 2. **File size limit:** Keep every source file under **250 lines**. Split into `services/`, `components/`, and `lib/` when approaching the limit.
 3. **Never expose secrets to the browser:** API keys (Gemini, Alchemy/RPC, Supabase, or any other) must live only in server-side env vars (no `NEXT_PUBLIC_*` for secrets). Client code may call `/api/*` only.
 4. **Update memory after work:** At the end of every task, append a dated entry to `docs/PROJECT_MEMORY.md` describing what changed, why, and which files were touched.
+5. **Repo-only writes:** Never write agent memory, vaults, or logs outside this repository (no `~/.cursor/global-vault/` or other home-directory paths). Sandbox-safe paths only: `COMPANY_OS/`, `docs/`, `app/`, `components/`, `lib/`, `services/`, config, README.
 
 ## Security defaults
 

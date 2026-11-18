@@ -31,21 +31,19 @@
 ```
 Browser (app/page.tsx + components/*)
   POST /api/rag { query, chain }
-    → lib/rate-limit → lib/validation → services/audit
-      → services/blockchain (RPC) → services/gemini (prompt-guard + LLM)
+    → parse/size → validation → rate-limit → services/audit
+      → blockchain snapshot → detectors → score/verdict → Gemini JSON (optional)
 ```
 
-| Layer | Path | Lines (wc) | Role |
-|---|---|---|---|
-| UI page | `app/page.tsx` | 147 | State machine: address/chain/loading/feed/error |
-| API | `app/api/rag/route.ts` | 44 | Sole POST endpoint |
-| Layout/CSS | `app/layout.tsx`, `globals.css` | 30+35 | Metadata + fonts |
-| Components | `components/*` (7) | 9–72 each | Header, chains, form, targets, feed, results, footer |
-| Lib | `lib/*` (6) | 31–50 | Zod, rate-limit, prompt-guard, helpers, types, targets |
-| Services | `services/*` (3) | 16–60 | RPC, Gemini, orchestration |
-| Config | `next.config.ts`, `package.json`, `.env.example` | — | Turbopack/Tailwind; server env placeholders |
+| Layer | Path | Role |
+|---|---|---|
+| UI | `app/page.tsx`, `components/*`, `/methodology` | Verdict strip, completeness, compliance footer |
+| API | `app/api/rag/route.ts` | `{ report, answer }` · JSON→400 before catch |
+| Lib | `lib/*` | Zod, RL, spend-cap, detectors, helpers, types |
+| Services | `services/*` | Snapshot, structured Gemini, orchestration |
+| Config | `next.config.ts` | CSP + security headers |
 
-**All source files ≤250 lines — PASS** (hardest: `app/page.tsx` 147).
+**All source files ≤250 lines — PASS** (Round 2 re-check).
 
 #### Functional / reliability bugs (file:line)
 
@@ -71,9 +69,25 @@ Browser (app/page.tsx + components/*)
 #### Security cross-ref (see `COMPANY_OS/05_SECURITY_&_QA_SIGN_OFF.md`)
 
 - Secrets / Zod / XSS text render: **PASS**
-- CSP + security headers: **FAIL** (`next.config.ts` no `headers()`, no `middleware.ts`)
-- In-memory rate limit: **FAIL on serverless** (`lib/rate-limit.ts:6`)
-- Score: **5/10**, ship gate CLOSED until P0 remediations + E2E
+- CSP + security headers: **PASS** (`next.config.ts` `headers()` — CSP, XFO, nosniff, Referrer-Policy, Permissions-Policy)
+- Rate limit: **PASS (warm + optional Upstash)** — `globalThis` + optional Redis REST; Gemini daily/burst spend cap
+- Integrity theater (defaultFlags / score 72 / Neural RAG / EIP-55 mislabel): **FIXED Round 2**
+- Score: **9/10** (RT-003 PASS) — residual: full Playwright E2E NOT RUN; XFF trusted-proxy assumption
+- Ship gate: **OPEN for portfolio demo** · paid EU claims still need human lawyer (see `03`)
+
+#### BUG remediation status (Round 2)
+
+| ID | Status | Fix |
+|---|---|---|
+| BUG-01 | **FIXED** | Removed `defaultFlags`; flags only from detectors + optional AI interpretive |
+| BUG-02 | **FIXED** | `riskScore: number \| null` — no default 72 |
+| BUG-03 | **FIXED** | Quick Target relabeled **EIP-55 Checksum Demo** (`tone: demo`) |
+| BUG-12 | **FIXED** | `hexBytecodeBytes()` true byte length |
+| BUG-13 | **FIXED** | Solana null → account does not exist / no data |
+| BUG-14 | **FIXED** | UI: “AI interpretive brief (not a vector RAG store)” |
+| BUG-15 | **FIXED** | Malformed JSON → **400** before catch |
+| BUG-16 | **FIXED** | Validate body before rate-limit consume |
+| BUG-04…11 | OPEN / deferred | Race AbortController, deeper approvals enum, clipboard await, GitHub URL, F5 feed, SearchForm copy |
 
 #### Production readiness vs 10/10 competitors
 
@@ -191,9 +205,9 @@ Browser (app/page.tsx + components/*)
 | Master Ledger | `COMPANY_OS/00_MASTER_LEDGER.md` | `@red-team-enforcer` | 2026-11-18 | **RT-002 PASS** | ACCEPTED Round 1 research pack · GoPlus dual-surface reconciled |
 | Human Psychology | `COMPANY_OS/01_HUMAN_PSYCHOLOGY_&_MARKET.md` | `@human-psychologist` | 2026-11-18 | **RT-002 PASS** | ACCEPTED — hard permalinks Q-D02/03/04 + Q-P03; CertiK $ UNVERIFIED |
 | Offer & Brand | `COMPANY_OS/02_OFFER_&_BRAND_COPY.md` | bootstrap | 2026-11-18 | — | TEMPLATE (Round 2+) |
-| Legal & AADE | `COMPANY_OS/03_LEGAL_&_AADE_COMPLIANCE.md` | bootstrap | 2026-11-18 | — | TEMPLATE |
+| Legal & AADE | `COMPANY_OS/03_LEGAL_&_AADE_COMPLIANCE.md` | `@legal-counsel` | 2026-11-18 | **RT-003 PASS** (MiCA/AI Act cites) | MiCA 2023/1114 + AI Act 2024/1689 EUR-Lex verified · Greek tax UNVERIFIED |
 | Product UX & Supply | `COMPANY_OS/04_PRODUCT_UX_&_SUPPLY_CHAIN.md` | `@venture-strategist` (§4 pricing draft) | 2026-11-18 | PENDING | DRAFT pricing — Round 2 planning OK |
-| Security & QA | `COMPANY_OS/05_SECURITY_&_QA_SIGN_OFF.md` | `@security-auditor` | 2026-11-18 | **RT-002 PASS** (pack); baseline still FAIL 5/10 | Research OK · **ship CLOSED** until Round 2 security build |
+| Security & QA | `COMPANY_OS/05_SECURITY_&_QA_SIGN_OFF.md` | `@security-auditor` + RT-003 | 2026-11-18 | **RT-003 PASS** · score **9/10** | P0 headers/RL/theater fixed · E2E residual |
 | GTM Ads Outbound BI | `COMPANY_OS/06_GTM_ADS_OUTBOUND_&_BI.md` | bootstrap | 2026-11-18 | — | TEMPLATE |
 
 ---
@@ -205,6 +219,7 @@ Browser (app/page.tsx + components/*)
 | RT-000 | 2026-11-18 | Template install | N/A | Bootstrap only | — |
 | RT-001 | 2026-11-18 | 00 + 01 + 05 Round 1 (`@venture-strategist` / `@human-psychologist` / `@security-auditor`) | **FAIL** | P0: Q-D02/D03/D04 lack hard permalinks; Q-P03 malformed URL; GoPlus pricing 00§10.2 (token-security-api “no public $”) ≠ 01§4 (security-api $199–$3499). P1: CertiK $5k–$150k uncited; 05 cites Q-P10 as “theater” but rewritten 01 Q-P10≠theater (should be Q-P06). Technical radiography spot-check PASS (BUG-01 `defaultFlags` L19–38 + `page.tsx:70`; RL `Map` L6; no `headers()`/`middleware.ts`). Pain quotes Q-P01/P05/P06/P10/P11 live-verified Alexandria 2026-11-18. | `@human-psychologist` (quotes) · `@venture-strategist` + `@enterprise-archivist` (GoPlus reconcile) · `@security-auditor` (05 Q-ID) |
 | RT-002 | 2026-11-18 | 00 + 01 + 05 remediations re-check | **PASS** | All RT-001 blockers verified fixed: Q-D02=`…/1v40cks/` · Q-D03/D04=`…/1uhukgx/` · Q-D05=`…/1x9mkz2/` · Q-P03=`…/1gsqyrp/comment/lxgcswy/` · GoPlus dual-surface (A token-security-api no public $ / B security-api $199–$3499) identical in 00§10.2 + 01§4 · CertiK audit $ → UNVERIFIED REQUIRES HUMAN · 05 finding #8 cites Q-P06. Radiography re-spot-check PASS (`defaultFlags` L19–38 + `page.tsx:70`; `return 72` L6–8; RL `Map` L6; no `headers()`/`middleware.ts`; Quick Target EIP-55 L16–19). Stub/AI-slop scan clean on Round 1 pack. Ship gate for security coding remains CLOSED (documented baseline FAIL 5/10). | — (research gate open; Round 2 planning next) |
+| RT-003 | 2026-11-18 | Round 2 code + `03` legal + README + build | **PASS** | Zero `defaultFlags` / `return 72` in `lib|services|app|components`. Malformed JSON → 400 (`app/api/rag/route.ts`). CSP+security headers in `next.config.ts`. EIP-55 Quick Target honest label. No “Neural RAG” product claim (methodology denies). MiCA **2023/1114** + AI Act **2024/1689** EUR-Lex URLs in `03` + Footer. `npm run lint` + `npm run build` exit 0. Score **9/10** (E2E residual). | — |
 
 ---
 
@@ -222,6 +237,11 @@ Browser (app/page.tsx + components/*)
 | 2026-11-18 | `@human-psychologist` + archivist | `01` quotes · `00` §10.2 · `05` #8 | RT-001 remediations: hard permalinks Q-P03/Q-D01–D05; GoPlus A+B surfaces; CertiK $ UNVERIFIED; theater→Q-P06 | Resubmit RT-002 |
 | 2026-11-18 | `@red-team-enforcer` | `00` §1/§5/§6/§7/§8/§9 | RT-002 **PASS** — Round 1 research gate OPEN; Round 2 planning allowed; no security P0 coding yet | Maker-Checker cleared |
 | 2026-11-18 | `@enterprise-archivist` | `00` §0.1 BUG-12…16 | Late merge from fullstack zero-base radiography (bytecode units, empty-account label, false Neural RAG, JSON 500, RL-before-validate) | Completeness after subagent completion |
+| 2026-11-18 | `@product-ux-architect` + `@fullstack-builder` | risk engine + UI | Kill theater; AuditReport; detectors; PARTIAL/UNAVAILABLE; verdict strip; methodology; BUG-01/02/03/12–16 | Round 2 U-01→U-20 core |
+| 2026-11-18 | `@security-auditor` | `next.config.ts`, `rate-limit`, `spend-cap`, API order, timeouts | CSP/headers; validate→RL; Gemini caps; AbortSignal | Round 2 P0 security |
+| 2026-11-18 | `@legal-counsel` | `03` + Footer | MiCA 2023/1114 + AI Act 2024/1689 Firecrawl EUR-Lex + UI banner | Round 2 compliance |
+| 2026-11-18 | `@red-team-enforcer` | `00` §7 + `05` | **RT-003 PASS** · score 9/10 | Maker-Checker Round 2 |
+| 2026-11-18 | `@enterprise-archivist` | `00` + `05` + memory | Ledger sync post RT-003 | Session close |
 
 ---
 
@@ -310,8 +330,8 @@ Ledger mission: M-002 (research PASS; build still gated)
 | Standing rules ενημερώθηκαν αν προέκυψαν νέοι | YES | R-007–R-009 |
 | Open issues §5 ενημερώθηκαν | YES | B-002–B-013 |
 | Deliverable registry §6 ενημερώθηκε | YES | |
-| Red Team verdict καταχωρήθηκε αν υπήρχε review | YES | **RT-002 PASS** |
+| Red Team verdict καταχωρήθηκε αν υπήρχε review | YES | **RT-003 PASS** |
 | Change log §8 έχει τουλάχιστον μία γραμμή για αυτή τη συνεδρία | YES | |
-| Επόμενο bot / mission στο §1 είναι σαφές | YES | Round 2 planning OPEN · security P0 coding NOT yet |
+| Επόμενο bot / mission στο §1 είναι σαφές | YES | Optional E2E + paid-launch legal · BUG-04…11 backlog |
 
-**Session status:** OPEN — Round 1 research pack **ACCEPTED** (RT-002 PASS). Round 2 **planning** allowed. Security/product **coding** still blocked until product round sequences P0 remediations.
+**Session status:** CLOSED Round 2 — **RT-003 PASS** · security **9/10** · portfolio ship gate OPEN · human lawyer still required for paid EU claims.

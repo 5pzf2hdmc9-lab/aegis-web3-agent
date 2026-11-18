@@ -18,19 +18,20 @@ Browser (app/page.tsx + components/*)
     │  POST /api/rag { query, chain }
     ▼
 app/api/rag/route.ts
-    │  rate-limit → validate → sanitize → RPC context → Gemini
+    │  JSON/size → validate → rate-limit → audit
     ▼
-lib/* + services/*
+blockchain snapshot → detectors → score/verdict → Gemini JSON (optional)
 ```
 
 ### Layers
 
 | Layer | Path | Role |
 | --- | --- | --- |
-| UI | `app/page.tsx`, `components/` | Chain selector, search, Quick Test Targets, audits feed, results |
-| API | `app/api/rag/route.ts` | Single audit endpoint (POST) |
-| Validation / security | `lib/validation.ts`, `lib/rate-limit.ts`, `lib/prompt-guard.ts` | Zod + regex, IP rate limit, injection scrubbing |
-| Domain services | `services/blockchain.ts`, `services/gemini.ts`, `services/audit.ts` | RPC fetch, Gemini call, audit orchestration |
+| UI | `app/page.tsx`, `components/`, `app/methodology` | Verdict strip, checked/not-checked, compliance footer |
+| API | `app/api/rag/route.ts` | Returns `{ report, answer }` |
+| Validation / security | `lib/validation.ts`, `lib/rate-limit.ts`, `lib/spend-cap.ts`, `lib/prompt-guard.ts` | Zod, RL, Gemini caps, injection scrubbing |
+| Domain services | `services/blockchain.ts`, `services/gemini.ts`, `services/audit.ts` | Snapshot, structured AI, orchestration |
+| Detectors | `lib/detectors.ts`, `lib/audit-helpers.ts` | Evidence flags + null-safe score |
 
 ## API Routes
 
@@ -39,8 +40,8 @@ lib/* + services/*
 - **Body:** `{ query: string, chain: "solana" \| "ethereum" \| "base" \| "bnb" }`
 - **Limits:** max **10 requests / minute / IP** → HTTP `429` when exceeded
 - **Validation:** Zod schema + address regex (Solana base58 or EVM `0x` + 40 hex)
-- **Response (200):** `{ answer: string }`
-- **Errors:** `400` invalid input, `429` rate limit, `500` internal (no secret leakage)
+- **Response (200):** `{ report: AuditReport, answer: string }`
+- **Errors:** `400` malformed JSON / validation / oversized body, `429` rate limit or AI spend cap, `500` internal (no secret leakage)
 
 Secrets used here are **server-only** (`process.env.*`, never `NEXT_PUBLIC_*`).
 
@@ -80,7 +81,7 @@ Secrets used here are **server-only** (`process.env.*`, never `NEXT_PUBLIC_*`).
 | Label | Chain | Address |
 | --- | --- | --- |
 | Safe Token — USDC | ethereum | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
-| High-Risk Contract | ethereum | `0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed` |
+| EIP-55 Checksum Demo | ethereum | `0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed` |
 | Live Solana Pool | solana | `58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2` |
 
 ## Change history
@@ -181,3 +182,14 @@ Secrets used here are **server-only** (`process.env.*`, never `NEXT_PUBLIC_*`).
 
 - Appended BUG-12…16 to `COMPANY_OS/00_MASTER_LEDGER.md` §0.1 from completed [fullstack audit](c5d8232b-fcea-4d9f-8b37-d4a4f46e4a5a): hex bytecode length, Solana null→“empty account”, false “Neural RAG” label, malformed JSON→500, RL-before-validate.
 - No RT re-open (research pack already RT-002 PASS); items queued for Round 2 coding.
+
+### 2026-11-18 — Round 2 full implementation (RT-003 PASS · 9/10)
+
+- Killed scanner theater: removed `defaultFlags` + default score `72`; EIP-55 Quick Target honest demo label; no “Neural RAG” product claim.
+- Deterministic risk engine: `OnChainSnapshot` + detectors (EVM bytecode bytes / proxy heuristic, Solana null≠empty, mint/freeze) + `AuditReport` with completeness / checked / notChecked / plain-English verdict.
+- API: validate + size before RL; malformed JSON → **400**; Gemini structured JSON + spend cap; RPC/Gemini timeouts.
+- Security headers in `next.config.ts`; compliance footer + `/methodology`; MiCA **2023/1114** + AI Act **2024/1689** in `COMPANY_OS/03` (Firecrawl EUR-Lex).
+- Portfolio `README.md` (architecture Mermaid, API contract, threat model).
+- `npm run lint` + `npm run build` exit **0**. Repo-only writes (no `~/.cursor/global-vault`).
+
+**Files:** `lib/*`, `services/*`, `app/api/rag/route.ts`, `app/page.tsx`, `app/methodology/page.tsx`, `components/{ScanResults,AuditsFeed,QuickTestTargets,Footer}.tsx`, `next.config.ts`, `README.md`, `.env.example`, `COMPANY_OS/{00,03,05}`, `docs/PROJECT_MEMORY.md`, `.cursorrules`
