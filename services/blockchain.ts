@@ -12,9 +12,10 @@ const RPC_ENDPOINTS: Record<ChainId, string | undefined> = {
 };
 
 const NOT_CHECKED_BASE = [
-  "token approvals / allowance enumeration",
+  "token approvals / allowance enumeration (needs wallet session)",
   "honeypot sell simulation",
   "LP lock / ownership renounce",
+  "holder distribution / liquidity depth",
   "social / website phishing",
   "historical drainer graph",
 ];
@@ -35,9 +36,7 @@ export async function fetchOnChainSnapshot(
   }
 
   try {
-    if (chain === "solana") {
-      return await fetchSolana(rpcUrl, target);
-    }
+    if (chain === "solana") return await fetchSolana(rpcUrl, target);
     return await fetchEvm(rpcUrl, target, chain);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "RPC failure";
@@ -63,24 +62,41 @@ async function rpcPost(rpcUrl: string, body: object): Promise<unknown> {
 }
 
 async function fetchSolana(rpcUrl: string, target: string): Promise<OnChainSnapshot> {
-  const data = (await rpcPost(rpcUrl, {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "getAccountInfo",
-    params: [target, { encoding: "jsonParsed" }],
-  })) as { result?: { value: null | SolAccount } };
+  const [infoRaw, sigRaw] = await Promise.all([
+    rpcPost(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getAccountInfo",
+      params: [target, { encoding: "jsonParsed" }],
+    }),
+    rpcPost(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "getSignaturesForAddress",
+      params: [target, { limit: 1 }],
+    }),
+  ]);
 
+  const data = infoRaw as { result?: { value: null | SolAccount } };
+  const sigs = sigRaw as { result?: Array<{ signature?: string }> };
+  const recentSigCount = Array.isArray(sigs?.result) ? sigs.result.length : 0;
   const value = data?.result?.value ?? null;
-  const checked = ["rpc:getAccountInfo"];
+  const checked = ["rpc:getAccountInfo", "rpc:getSignaturesForAddress"];
   const notChecked = [...NOT_CHECKED_BASE];
 
   if (value === null) {
     return {
       completeness: "PARTIAL",
-      summary: "Solana getAccountInfo returned null — account does not exist or has no data at this RPC.",
+      summary:
+        "Solana getAccountInfo returned null — account does not exist or has no data at this RPC.",
       checked,
       notChecked,
-      facts: { accountExists: false, lamports: null, owner: null },
+      facts: {
+        accountExists: false,
+        lamports: null,
+        owner: null,
+        recentSignaturePresent: recentSigCount > 0,
+      },
     };
   }
 
@@ -91,7 +107,7 @@ async function fetchSolana(rpcUrl: string, target: string): Promise<OnChainSnaps
 
   return {
     completeness: "PARTIAL",
-    summary: `Solana account live — Lamports=${value.lamports}, Owner=${value.owner}`,
+    summary: `Solana account live — Lamports=${value.lamports}, Owner=${value.owner}, recentSig=${recentSigCount > 0}`,
     checked: [...checked, "rpc:account-presence", "rpc:mint-freeze-if-token"],
     notChecked,
     facts: {
@@ -100,6 +116,7 @@ async function fetchSolana(rpcUrl: string, target: string): Promise<OnChainSnaps
       owner: value.owner,
       mintAuthority,
       freezeAuthority,
+      recentSignaturePresent: recentSigCount > 0,
     },
   };
 }
@@ -121,14 +138,28 @@ async function fetchEvm(
   target: string,
   chain: ChainId
 ): Promise<OnChainSnapshot> {
-  const data = (await rpcPost(rpcUrl, {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "eth_getCode",
-    params: [target, "latest"],
-  })) as { result?: string };
+  const [codeRaw, balRaw, nonceRaw] = await Promise.all([
+    rpcPost(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_getCode",
+      params: [target, "latest"],
+    }),
+    rpcPost(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "eth_getBalance",
+      params: [target, "latest"],
+    }),
+    rpcPost(rpcUrl, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "eth_getTransactionCount",
+      params: [target, "latest"],
+    }),
+  ]);
 
-  const code = data?.result;
+  const code = (codeRaw as { result?: string })?.result;
   if (typeof code !== "string") {
     return {
       completeness: "UNAVAILABLE",
@@ -139,17 +170,36 @@ async function fetchEvm(
     };
   }
 
+  const balHex = (balRaw as { result?: string })?.result;
+  const nonceHex = (nonceRaw as { result?: string })?.result;
+  const weiBalance =
+    typeof balHex === "string" && balHex.startsWith("0x")
+      ? Number(BigInt(balHex) > BigInt(Number.MAX_SAFE_INTEGER)
+          ? Number.MAX_SAFE_INTEGER
+          : BigInt(balHex))
+      : null;
+  const txCount =
+    typeof nonceHex === "string" && nonceHex.startsWith("0x")
+      ? Number.parseInt(nonceHex, 16)
+      : null;
+
   const bytes = hexBytecodeBytes(code);
   const isContract = bytes > 0;
   const proxy = isContract ? detectEvmProxy(code) : { likely: false, evidence: "" };
-  const checked = ["rpc:eth_getCode", "rpc:bytecode-bytes", "rpc:proxy-heuristic"];
+  const checked = [
+    "rpc:eth_getCode",
+    "rpc:eth_getBalance",
+    "rpc:eth_getTransactionCount",
+    "rpc:bytecode-bytes",
+    "rpc:proxy-heuristic",
+  ];
 
   return {
     completeness: "PARTIAL",
     summary: isContract
-      ? `EVM contract on ${chain.toUpperCase()} — bytecode ${bytes} bytes` +
+      ? `EVM contract on ${chain.toUpperCase()} — bytecode ${bytes} bytes; nonce=${txCount ?? "?"}` +
         (proxy.likely ? `; proxy heuristic: ${proxy.evidence}` : "")
-      : `EVM EOA on ${chain.toUpperCase()} — no bytecode`,
+      : `EVM EOA on ${chain.toUpperCase()} — no bytecode; nonce=${txCount ?? "?"}`,
     checked,
     notChecked: NOT_CHECKED_BASE,
     facts: {
@@ -157,6 +207,8 @@ async function fetchEvm(
       bytecodeBytes: bytes,
       likelyProxy: proxy.likely,
       proxyEvidence: proxy.evidence || null,
+      weiBalance,
+      txCount,
     },
   };
 }

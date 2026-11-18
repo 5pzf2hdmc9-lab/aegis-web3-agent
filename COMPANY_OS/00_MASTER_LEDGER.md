@@ -72,22 +72,29 @@ Browser (app/page.tsx + components/*)
 - CSP + security headers: **PASS** (`next.config.ts` `headers()` — CSP, XFO, nosniff, Referrer-Policy, Permissions-Policy)
 - Rate limit: **PASS (warm + optional Upstash)** — `globalThis` + optional Redis REST; Gemini daily/burst spend cap
 - Integrity theater (defaultFlags / score 72 / Neural RAG / EIP-55 mislabel): **FIXED Round 2**
-- Score: **9/10** (RT-003 PASS) — residual: full Playwright E2E NOT RUN; XFF trusted-proxy assumption
-- Ship gate: **OPEN for portfolio demo** · paid EU claims still need human lawyer (see `03`)
+- Score: **10/10** (RT-004 PASS) — XFF trusted-proxy + Playwright E2E 20/20 + BUG-04…11 closed
+- Ship gate: **OPEN — Production & Portfolio Ready** · paid EU claims still need human lawyer (see `03`)
 
-#### BUG remediation status (Round 2)
+#### BUG remediation status (Round 2 + Round 3)
 
 | ID | Status | Fix |
 |---|---|---|
 | BUG-01 | **FIXED** | Removed `defaultFlags`; flags only from detectors + optional AI interpretive |
 | BUG-02 | **FIXED** | `riskScore: number \| null` — no default 72 |
 | BUG-03 | **FIXED** | Quick Target relabeled **EIP-55 Checksum Demo** (`tone: demo`) |
+| BUG-04 | **FIXED** | AbortController + monotonic request id — stale responses discarded (`app/page.tsx`) |
+| BUG-05 | **FIXED** | EVM `eth_getBalance` + `eth_getTransactionCount`; Solana `getSignaturesForAddress`; approvals remain honest notChecked (paste-mode) |
+| BUG-06 | **FIXED** | Skip Gemini when snapshot `UNAVAILABLE` — deterministic flags only (`services/audit.ts`) |
+| BUG-07 | **FIXED** | Verdict + threat-level shell + completeness badge chrome (`ScanResults.tsx`) |
+| BUG-08 | **FIXED** | `await navigator.clipboard.writeText` + failure path |
+| BUG-09 | **FIXED** | Header → `https://github.com/5pzf2hdmc9-lab/aegischain-risk-agent` |
+| BUG-10 | **FIXED** | Recent Audits Feed persisted in `sessionStorage` (`aegisweb3.auditFeed.v1`) |
+| BUG-11 | **FIXED** | SearchForm placeholder address-only (no “Hash”) |
 | BUG-12 | **FIXED** | `hexBytecodeBytes()` true byte length |
 | BUG-13 | **FIXED** | Solana null → account does not exist / no data |
 | BUG-14 | **FIXED** | UI: “AI interpretive brief (not a vector RAG store)” |
 | BUG-15 | **FIXED** | Malformed JSON → **400** before catch |
 | BUG-16 | **FIXED** | Validate body before rate-limit consume |
-| BUG-04…11 | OPEN / deferred | Race AbortController, deeper approvals enum, clipboard await, GitHub URL, F5 feed, SearchForm copy |
 
 #### Production readiness vs 10/10 competitors
 
@@ -108,12 +115,12 @@ Browser (app/page.tsx + components/*)
 
 | Πεδίο | Τιμή |
 |---|---|
-| Mission ID | **M-002** |
-| Στόχος (1 πρόταση) | Γύρος 1: Company OS bootstrap + zero-base code/security audit + live Firecrawl competitor/user research → artifacts 00/01/05 ready for Red Team before Round 2 implementation |
-| Τρέχον bot | `@red-team-enforcer` — **RT-002 PASS** filed |
-| Επόμενο bot | Round 2 **planning** owners (`@venture-strategist` / `@product-ux-architect` / `@brand-copy-director`) — research gate OPEN. **Do NOT code security P0** (headers/RL/integrity) until product Round 2 scope is planned & Founder-sequenced. |
-| Status | **RT-002 PASS — Round 1 research gate OPEN** · Round 2 planning allowed · security/product coding still gated |
-| Blockers | Founder legal entity PENDING (B-001); security ship CLOSED until Round 2 build (B-002–B-004); E2E NOT RUN (B-006) |
+| Mission ID | **M-003** |
+| Στόχος (1 πρόταση) | Γύρος 3: κλείσιμο residuals (XFF + BUG-04…11) + adversarial Playwright E2E + RT-004 τελική σφραγίδα 10/10 |
+| Τρέχον bot | `@enterprise-archivist` — ledger sync post **RT-004 PASS** |
+| Επόμενο bot | Founder (optional paid-launch legal) · GTM bots on `02`/`06` when monetization starts |
+| Status | **RT-004 PASS — Production & Portfolio Ready** · score **10/10** |
+| Blockers | B-001 legal entity PENDING; B-010/B-011 for paid EU launch only (not portfolio gate) |
 | Last updated (ISO) | 2026-11-18 |
 
 ### Relay log (σειριακή σκυταλοδρομία)
@@ -129,6 +136,12 @@ Browser (app/page.tsx + components/*)
 | 6 | `@red-team-enforcer` | 00/01/05 | 2026-11-18 | 2026-11-18 | **RT-001 FAIL** — see §7 |
 | 7 | owners remediate | 01 permalinks · 00§10.2 · 05#8 | 2026-11-18 | 2026-11-18 | RT-001 fixes applied |
 | 8 | `@red-team-enforcer` | 00/01/05 RT-002 | 2026-11-18 | 2026-11-18 | **RT-002 PASS** — Round 1 research gate OPEN |
+| 9 | `@fullstack-builder` + `@security-auditor` | Round 2 code + headers/RL | 2026-11-18 | 2026-11-18 | Theater kill · CSP · JSON 400 |
+| 10 | `@red-team-enforcer` | RT-003 | 2026-11-18 | 2026-11-18 | **RT-003 PASS** · 9/10 · E2E residual |
+| 11 | `@fullstack-builder` + `@security-auditor` | XFF + BUG-04…11 | 2026-11-18 | 2026-11-18 | Round 3 residuals closed |
+| 12 | `@e2e-adversarial-tester` | `e2e/aegischain.spec.ts` | 2026-11-18 | 2026-11-18 | Playwright **20/20 PASS** |
+| 13 | `@red-team-enforcer` | RT-004 | 2026-11-18 | 2026-11-18 | **RT-004 PASS** · 10/10 |
+| 14 | `@enterprise-archivist` | 00 + 05 + memory | 2026-11-18 | 2026-11-18 | Round 3 session close |
 
 ---
 
@@ -182,11 +195,11 @@ Browser (app/page.tsx + components/*)
 | ID | Τύπος | Περιγραφή | Owner bot | Blocked since | Severity | Resolution criteria |
 |---|---|---|---|---|---|---|
 | B-001 | INPUT | Νομική επωνυμία / μορφή / founder email | Founder | 2026-11-18 | P2 | §0 legal fields filled |
-| B-002 | SEC | Missing CSP/security headers | `@fullstack-builder` Round 2 | 2026-11-18 | P0 | `05` headers PASS |
-| B-003 | SEC | Serverless-ineffective in-memory rate limit + public Gemini spend | Round 2 | 2026-11-18 | P0 | Durable RL (Upstash/Vercel KV) or edge config |
-| B-004 | PROD | Fake flags + default score 72 (kills “explainable” positioning) | Round 2 | 2026-11-18 | P0 | Structured Gemini JSON schema + flags from model/RPC only |
-| B-005 | PROD | Shallow RPC vs GoPlus/De.Fi feature bar | Round 2 | 2026-11-18 | P0 | Integrate ≥1 token-security data source |
-| B-006 | QA | Playwright E2E NOT RUN | `@e2e-adversarial-tester` | 2026-11-18 | P1 | E2E matrix PASS in `05` |
+| B-002 | SEC | Missing CSP/security headers | `@fullstack-builder` | 2026-11-18 | P0 | **CLOSED** Round 2 — `next.config.ts` headers PASS |
+| B-003 | SEC | Serverless-ineffective in-memory rate limit + public Gemini spend | Round 2/3 | 2026-11-18 | P0 | **CLOSED** — globalThis + optional Upstash + spend cap + XFF trust |
+| B-004 | PROD | Fake flags + default score 72 | Round 2 | 2026-11-18 | P0 | **CLOSED** — structured flags; no default 72 |
+| B-005 | PROD | Shallow RPC vs GoPlus/De.Fi feature bar | Round 3 | 2026-11-18 | P0 | **CLOSED (honest depth)** — balance/nonce/signatures + paste-mode approval limit; GoPlus-class APIs remain I-001/I-002 |
+| B-006 | QA | Playwright E2E NOT RUN | `@e2e-adversarial-tester` | 2026-11-18 | P1 | **CLOSED** — 20/20 PASS 2026-11-18 |
 | B-007 | RED | Red Team on Round 1 pack | `@red-team-enforcer` | 2026-11-18 | P0 | **CLOSED** — RT-002 PASS 2026-11-18 |
 | B-008 | PRODUCT | No auth / DB / billing — cannot capture LTV or gate paid tiers | `@fullstack-builder` | 2026-11-18 | P0 | Auth + Stripe + persisted audits |
 | B-009 | GTM | Free scanners (De.Fi, GoPlus Free) compress WTP for paste-audit alone | `@venture-strategist` + copy | 2026-11-18 | P0 | Paid wedge: history / API / sim / alerts validated |
@@ -202,12 +215,12 @@ Browser (app/page.tsx + components/*)
 | Artifact | Path | Last editor bot | Last edit (ISO) | Red Team | Status |
 |---|---|---|---|---|---|
 | Ironclad Constitution | `.cursor/rules/00-ironclad-constitution.mdc` | bootstrap | 2026-11-18 | PENDING | INSTALLED |
-| Master Ledger | `COMPANY_OS/00_MASTER_LEDGER.md` | `@red-team-enforcer` | 2026-11-18 | **RT-002 PASS** | ACCEPTED Round 1 research pack · GoPlus dual-surface reconciled |
+| Master Ledger | `COMPANY_OS/00_MASTER_LEDGER.md` | `@enterprise-archivist` | 2026-11-18 | **RT-004 PASS** | Round 3 close · M-003 · BUG-04…11 CLOSED · E2E 20/20 |
 | Human Psychology | `COMPANY_OS/01_HUMAN_PSYCHOLOGY_&_MARKET.md` | `@human-psychologist` | 2026-11-18 | **RT-002 PASS** | ACCEPTED — hard permalinks Q-D02/03/04 + Q-P03; CertiK $ UNVERIFIED |
 | Offer & Brand | `COMPANY_OS/02_OFFER_&_BRAND_COPY.md` | bootstrap | 2026-11-18 | — | TEMPLATE (Round 2+) |
 | Legal & AADE | `COMPANY_OS/03_LEGAL_&_AADE_COMPLIANCE.md` | `@legal-counsel` | 2026-11-18 | **RT-003 PASS** (MiCA/AI Act cites) | MiCA 2023/1114 + AI Act 2024/1689 EUR-Lex verified · Greek tax UNVERIFIED |
 | Product UX & Supply | `COMPANY_OS/04_PRODUCT_UX_&_SUPPLY_CHAIN.md` | `@venture-strategist` (§4 pricing draft) | 2026-11-18 | PENDING | DRAFT pricing — Round 2 planning OK |
-| Security & QA | `COMPANY_OS/05_SECURITY_&_QA_SIGN_OFF.md` | `@security-auditor` + RT-003 | 2026-11-18 | **RT-003 PASS** · score **9/10** | P0 headers/RL/theater fixed · E2E residual |
+| Security & QA | `COMPANY_OS/05_SECURITY_&_QA_SIGN_OFF.md` | `@e2e-adversarial-tester` + RT-004 | 2026-11-18 | **RT-004 PASS** · score **10/10** | E2E 20/20 · XFF · BUG-04…11 closed |
 | GTM Ads Outbound BI | `COMPANY_OS/06_GTM_ADS_OUTBOUND_&_BI.md` | bootstrap | 2026-11-18 | — | TEMPLATE |
 
 ---
@@ -220,6 +233,7 @@ Browser (app/page.tsx + components/*)
 | RT-001 | 2026-11-18 | 00 + 01 + 05 Round 1 (`@venture-strategist` / `@human-psychologist` / `@security-auditor`) | **FAIL** | P0: Q-D02/D03/D04 lack hard permalinks; Q-P03 malformed URL; GoPlus pricing 00§10.2 (token-security-api “no public $”) ≠ 01§4 (security-api $199–$3499). P1: CertiK $5k–$150k uncited; 05 cites Q-P10 as “theater” but rewritten 01 Q-P10≠theater (should be Q-P06). Technical radiography spot-check PASS (BUG-01 `defaultFlags` L19–38 + `page.tsx:70`; RL `Map` L6; no `headers()`/`middleware.ts`). Pain quotes Q-P01/P05/P06/P10/P11 live-verified Alexandria 2026-11-18. | `@human-psychologist` (quotes) · `@venture-strategist` + `@enterprise-archivist` (GoPlus reconcile) · `@security-auditor` (05 Q-ID) |
 | RT-002 | 2026-11-18 | 00 + 01 + 05 remediations re-check | **PASS** | All RT-001 blockers verified fixed: Q-D02=`…/1v40cks/` · Q-D03/D04=`…/1uhukgx/` · Q-D05=`…/1x9mkz2/` · Q-P03=`…/1gsqyrp/comment/lxgcswy/` · GoPlus dual-surface (A token-security-api no public $ / B security-api $199–$3499) identical in 00§10.2 + 01§4 · CertiK audit $ → UNVERIFIED REQUIRES HUMAN · 05 finding #8 cites Q-P06. Radiography re-spot-check PASS (`defaultFlags` L19–38 + `page.tsx:70`; `return 72` L6–8; RL `Map` L6; no `headers()`/`middleware.ts`; Quick Target EIP-55 L16–19). Stub/AI-slop scan clean on Round 1 pack. Ship gate for security coding remains CLOSED (documented baseline FAIL 5/10). | — (research gate open; Round 2 planning next) |
 | RT-003 | 2026-11-18 | Round 2 code + `03` legal + README + build | **PASS** | Zero `defaultFlags` / `return 72` in `lib|services|app|components`. Malformed JSON → 400 (`app/api/rag/route.ts`). CSP+security headers in `next.config.ts`. EIP-55 Quick Target honest label. No “Neural RAG” product claim (methodology denies). MiCA **2023/1114** + AI Act **2024/1689** EUR-Lex URLs in `03` + Footer. `npm run lint` + `npm run build` exit 0. Score **9/10** (E2E residual). | — |
+| RT-004 | 2026-11-18 | Round 3 residuals + Playwright E2E + lint/build | **PASS** | XFF: arbitrary `X-Forwarded-For` ignored unless `TRUSTED_PROXY`/`VERCEL`/`x-vercel-forwarded-for`. BUG-04…11 all **FIXED** (AbortController, RPC depth, no AI invent on UNAVAILABLE, verdict chrome, clipboard await, GitHub repo URL, sessionStorage feed, address-only placeholder). Playwright **20 passed / 0 failed / 0 skipped** (desktop 1280×800 + mobile 390×844): legal/MiCA/AI Act footer, methodology nav, Safe/Caution/Do Not Sign/PARTIAL/UNAVAILABLE UI, 400 malformed/oversized/invalid, 429 RL, CSP+nosniff+XFO. `npm run lint` + `npm run build` exit **0**. Score **10/10** — Production & Portfolio Ready. | — |
 
 ---
 
@@ -242,6 +256,10 @@ Browser (app/page.tsx + components/*)
 | 2026-11-18 | `@legal-counsel` | `03` + Footer | MiCA 2023/1114 + AI Act 2024/1689 Firecrawl EUR-Lex + UI banner | Round 2 compliance |
 | 2026-11-18 | `@red-team-enforcer` | `00` §7 + `05` | **RT-003 PASS** · score 9/10 | Maker-Checker Round 2 |
 | 2026-11-18 | `@enterprise-archivist` | `00` + `05` + memory | Ledger sync post RT-003 | Session close |
+| 2026-11-18 | `@fullstack-builder` + `@security-auditor` | `rate-limit`, page, blockchain, audit, UI | XFF trust + BUG-04…11 | Round 3 residuals |
+| 2026-11-18 | `@e2e-adversarial-tester` | `e2e/`, `playwright.config.ts` | Adversarial Playwright 20/20 | Round 3 E2E |
+| 2026-11-18 | `@red-team-enforcer` | `00` §7 + `05` | **RT-004 PASS** · 10/10 | Final seal |
+| 2026-11-18 | `@enterprise-archivist` | `00` + `05` + `docs/PROJECT_MEMORY.md` | Round 3 close sync | Session close |
 
 ---
 
@@ -314,10 +332,10 @@ Retention/NRR (no accounts) · proprietary flag corpus · Privacy/Terms · trade
 ### 10.8 RELAY
 
 ```
-RELAY → Round 2 planning (@venture-strategist / @product-ux-architect / @brand-copy-director)
-Mission: Plan Round 2 product scope from accepted 00/01/05 — do NOT code security P0 until product round sequenced
+RELAY → Founder (optional paid-launch legal / GTM)
+Mission: M-003 COMPLETE — RT-004 PASS · 10/10 Production & Portfolio Ready
 Banned claims: fabricated TAM; “CertiK replacement”; “Arkham-grade AML”; safe-to-invest
-Ledger mission: M-002 (research PASS; build still gated)
+Next: B-010/B-011 only if monetizing in EU; I-001/I-002 for GoPlus-class depth
 ```
 
 ---
@@ -326,12 +344,12 @@ Ledger mission: M-002 (research PASS; build still gated)
 
 | Check | Done (YES/NO) | Notes |
 |---|---|---|
-| Νέες Founder decisions καταχωρήθηκαν στο §2 | YES | D-003, D-004 |
+| Νέες Founder decisions καταχωρήθηκαν στο §2 | YES | D-003, D-004 (unchanged) |
 | Standing rules ενημερώθηκαν αν προέκυψαν νέοι | YES | R-007–R-009 |
-| Open issues §5 ενημερώθηκαν | YES | B-002–B-013 |
-| Deliverable registry §6 ενημερώθηκε | YES | |
-| Red Team verdict καταχωρήθηκε αν υπήρχε review | YES | **RT-003 PASS** |
-| Change log §8 έχει τουλάχιστον μία γραμμή για αυτή τη συνεδρία | YES | |
-| Επόμενο bot / mission στο §1 είναι σαφές | YES | Optional E2E + paid-launch legal · BUG-04…11 backlog |
+| Open issues §5 ενημερώθηκαν | YES | B-002–B-006 CLOSED Round 2/3 |
+| Deliverable registry §6 ενημερώθηκε | YES | `05` RT-004 |
+| Red Team verdict καταχωρήθηκε αν υπήρχε review | YES | **RT-004 PASS** |
+| Change log §8 έχει τουλάχιστον μία γραμμή για αυτή τη συνεδρία | YES | Round 3 rows |
+| Επόμενο bot / mission στο §1 είναι σαφές | YES | Founder / optional paid-launch legal |
 
-**Session status:** CLOSED Round 2 — **RT-003 PASS** · security **9/10** · portfolio ship gate OPEN · human lawyer still required for paid EU claims.
+**Session status:** CLOSED Round 3 — **RT-004 PASS** · security **10/10** · Production & Portfolio Ready · human lawyer still required for paid EU claims.

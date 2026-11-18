@@ -1,5 +1,6 @@
 /**
  * Durable-ish IP rate limit: globalThis (survives warm serverless) + optional Upstash.
+ * Client IP: never trust arbitrary X-Forwarded-For unless TRUSTED_PROXY or Vercel.
  */
 
 type Bucket = { timestamps: number[] };
@@ -14,12 +15,32 @@ function buckets(): Map<string, Bucket> {
   return g.__aegisRl;
 }
 
+function firstHop(header: string | null): string | null {
+  if (!header) return null;
+  const hop = header.split(",")[0]?.trim();
+  return hop || null;
+}
+
+/**
+ * Prefer platform-owned identity. Spoofed XFF is ignored unless TRUSTED_PROXY=true
+ * (or Vercel sets x-vercel-forwarded-for / VERCEL=1 with platform XFF).
+ */
 export function getClientIp(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
+  const vercelFwd = firstHop(req.headers.get("x-vercel-forwarded-for"));
+  if (vercelFwd) return vercelFwd;
+
+  const trustProxy =
+    process.env.TRUSTED_PROXY === "true" || process.env.VERCEL === "1";
+
+  if (trustProxy) {
+    const xff = firstHop(req.headers.get("x-forwarded-for"));
+    if (xff) return xff;
+    const realIp = req.headers.get("x-real-ip")?.trim();
+    if (realIp) return realIp;
   }
-  return req.headers.get("x-real-ip") || "unknown";
+
+  // Local / untrusted edge: ignore client-controlled forwarding headers
+  return "direct";
 }
 
 export async function checkRateLimit(

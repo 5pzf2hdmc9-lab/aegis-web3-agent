@@ -7,10 +7,24 @@ import { runDeterministicDetectors } from "@/lib/detectors";
 import type { AuditReport, RiskFlag, ScanCompleteness } from "@/lib/types";
 import type { ChainId } from "@/lib/validation";
 import { fetchOnChainSnapshot } from "@/services/blockchain";
-import { generateStructuredAudit } from "@/services/gemini";
+import {
+  generateStructuredAudit,
+  type AiAuditPayload,
+} from "@/services/gemini";
 
 const CLEAN_NOTE =
   "CLEAN ≠ SAFE: Passed surface RPC checks do not prove honeypot-free trading, LP integrity, or social-engineering safety.";
+
+const RPC_UNAVAILABLE_AI: AiAuditPayload = {
+  plainEnglishSummary: "",
+  suggestedVerdict: null,
+  nextAction: null,
+  additionalFlags: [],
+  uncertaintyNote:
+    "AI interpretive layer skipped — on-chain RPC unavailable; deterministic flags only.",
+  unavailable: true,
+  reason: "rpc-unavailable",
+};
 
 export async function runAutonomousAudit(
   target: string,
@@ -19,12 +33,16 @@ export async function runAutonomousAudit(
   const snap = await fetchOnChainSnapshot(target, chain);
   const deterministic = runDeterministicDetectors(chain, snap);
 
-  const ai = await generateStructuredAudit({
-    target,
-    chain,
-    blockchainContext: `${snap.summary} | checked=${snap.checked.join(",")} | notChecked=${snap.notChecked.join(",")}`,
-    deterministicFlags: deterministic,
-  });
+  // BUG-06: never invent an AI audit when RPC layer is UNAVAILABLE
+  const ai: AiAuditPayload =
+    snap.completeness === "UNAVAILABLE"
+      ? RPC_UNAVAILABLE_AI
+      : await generateStructuredAudit({
+          target,
+          chain,
+          blockchainContext: `${snap.summary} | checked=${snap.checked.join(",")} | notChecked=${snap.notChecked.join(",")}`,
+          deterministicFlags: deterministic,
+        });
 
   // Merge: deterministic always kept; AI interpretive flags only if AI available
   const flags: RiskFlag[] = [...deterministic];

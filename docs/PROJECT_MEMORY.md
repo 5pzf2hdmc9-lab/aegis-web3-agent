@@ -193,3 +193,13 @@ Secrets used here are **server-only** (`process.env.*`, never `NEXT_PUBLIC_*`).
 - `npm run lint` + `npm run build` exit **0**. Repo-only writes (no `~/.cursor/global-vault`).
 
 **Files:** `lib/*`, `services/*`, `app/api/rag/route.ts`, `app/page.tsx`, `app/methodology/page.tsx`, `components/{ScanResults,AuditsFeed,QuickTestTargets,Footer}.tsx`, `next.config.ts`, `README.md`, `.env.example`, `COMPANY_OS/{00,03,05}`, `docs/PROJECT_MEMORY.md`, `.cursorrules`
+
+### 2026-11-18 — Round 3 residuals + Playwright E2E (RT-004 PASS · 10/10)
+
+- **XFF trusted-proxy:** `getClientIp` prefers `x-vercel-forwarded-for`; honors `X-Forwarded-For` only when `TRUSTED_PROXY=true` or `VERCEL=1`; else bucket `"direct"`.
+- **BUG-04…11 CLOSED:** AbortController+req id; EVM balance/nonce + Solana signatures; skip Gemini on RPC UNAVAILABLE; verdict/threat/completeness chrome; await clipboard; GitHub repo portfolio URL; sessionStorage feed; address-only SearchForm placeholder.
+- **Playwright:** `e2e/aegischain.spec.ts` + `playwright.config.ts` · desktop 1280×800 + mobile 390×844 · **20 passed / 0 failed / 0 skipped**.
+- Proof: `npm run lint` exit 0 · `npm run build` exit 0 · `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test` exit 0.
+- Company OS: `00` + `05` updated · **RT-004 PASS** Production & Portfolio Ready.
+
+**Files:** `lib/rate-limit.ts`, `services/{blockchain,audit}.ts`, `app/page.tsx`, `components/{ScanResults,Header,SearchForm}.tsx`, `.env.example`, `e2e/aegischain.spec.ts`, `playwright.config.ts`, `package.json`, `.gitignore`, `COMPANY_OS/{00,05}`, `docs/PROJECT_MEMORY.md`

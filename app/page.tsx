@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Header } from "@/components/Header";
 import { ChainSelector } from "@/components/ChainSelector";
@@ -13,14 +13,41 @@ import { formatClock } from "@/lib/audit-helpers";
 import { isAddressValidForChain, type ChainId } from "@/lib/validation";
 import type { AuditFeedItem, AuditReport, QuickTarget } from "@/lib/types";
 
+const FEED_KEY = "aegisweb3.auditFeed.v1";
+
 export default function Web3RiskDashboard() {
   const [address, setAddress] = useState("");
   const [chain, setChain] = useState<ChainId>("solana");
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<AuditReport | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [feed, setFeed] = useState<AuditFeedItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const reqIdRef = useRef(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = sessionStorage.getItem(FEED_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as AuditFeedItem[];
+        if (Array.isArray(parsed)) setFeed(parsed.slice(0, 12));
+      } catch {
+        /* ignore corrupt session feed */
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(FEED_KEY, JSON.stringify(feed));
+    } catch {
+      /* quota / private mode */
+    }
+  }, [feed]);
 
   const runAudit = async (targetAddress: string, targetChain: ChainId) => {
     if (!targetAddress.trim()) {
@@ -36,17 +63,25 @@ export default function Web3RiskDashboard() {
       return;
     }
 
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    const reqId = ++reqIdRef.current;
+
     setLoading(true);
     setScanResult(null);
     setError(null);
+    setCopyError(null);
 
     try {
       const res = await fetch("/api/rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: targetAddress.trim(), chain: targetChain }),
+        signal: ac.signal,
       });
       const data = await res.json();
+      if (reqId !== reqIdRef.current) return;
       if (!res.ok) {
         throw new Error(data.error || "Audit failed");
       }
@@ -58,7 +93,6 @@ export default function Web3RiskDashboard() {
 
       const timestamp = formatClock();
       setScanResult(report);
-
       setFeed((prev) =>
         [
           {
@@ -74,10 +108,12 @@ export default function Web3RiskDashboard() {
         ].slice(0, 12)
       );
     } catch (err: unknown) {
+      if (reqId !== reqIdRef.current) return;
+      if (err instanceof DOMException && err.name === "AbortError") return;
       const message = err instanceof Error ? err.message : "Audit failed";
       setError(message);
     } finally {
-      setLoading(false);
+      if (reqId === reqIdRef.current) setLoading(false);
     }
   };
 
@@ -94,14 +130,20 @@ export default function Web3RiskDashboard() {
     await runAudit(target.address, target.chain);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = async (text: string) => {
+    setCopyError(null);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+      setCopyError("Clipboard copy failed — select and copy manually.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans overflow-x-hidden">
       <div className="max-w-6xl mx-auto space-y-8">
         <Header />
 
@@ -122,6 +164,11 @@ export default function Web3RiskDashboard() {
           {error && (
             <p className="text-sm text-rose-400 font-mono border border-rose-500/30 bg-rose-500/5 rounded-xl px-4 py-3">
               {error}
+            </p>
+          )}
+          {copyError && (
+            <p className="text-sm text-amber-400 font-mono border border-amber-500/30 bg-amber-500/5 rounded-xl px-4 py-3">
+              {copyError}
             </p>
           )}
         </div>

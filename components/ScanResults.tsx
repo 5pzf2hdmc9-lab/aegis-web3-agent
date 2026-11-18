@@ -1,10 +1,10 @@
 import { AlertTriangle, Check, Copy, ExternalLink, Lock, Shield } from "lucide-react";
-import type { AuditReport, VerdictKind } from "@/lib/types";
+import type { AuditReport, ThreatLevel, VerdictKind } from "@/lib/types";
 
 type Props = {
   result: AuditReport;
   copied: boolean;
-  onCopy: (text: string) => void;
+  onCopy: (text: string) => void | Promise<void>;
 };
 
 const VERDICT_LABEL: Record<VerdictKind, string> = {
@@ -20,6 +20,14 @@ const VERDICT_CLASS: Record<VerdictKind, string> = {
   DO_NOT_SIGN: "border-rose-500/40 bg-rose-500/10 text-rose-300",
 };
 
+const SHELL_CLASS: Record<ThreatLevel, string> = {
+  "Low Risk": "border-emerald-500/30",
+  "Moderate Risk": "border-amber-500/30",
+  "High Risk": "border-orange-500/40",
+  "Critical / High Risk": "border-rose-500/40",
+  UNKNOWN: "border-slate-600/60",
+};
+
 export function ScanResults({ result, copied, onCopy }: Props) {
   const copyText = [
     result.verdict,
@@ -29,10 +37,29 @@ export function ScanResults({ result, copied, onCopy }: Props) {
     ...result.flags.map((f) => `[${f.severity}] ${f.title}: ${f.evidence}`),
   ].join("\n");
 
+  const completenessClass =
+    result.completeness === "UNAVAILABLE"
+      ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+      : result.completeness === "PARTIAL"
+        ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+        : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+
   return (
-    <div className="bg-slate-900 border border-slate-700/60 rounded-2xl p-6 shadow-2xl space-y-6 animate-fadeIn">
+    <div
+      className={`bg-slate-900 border rounded-2xl p-6 shadow-2xl space-y-6 animate-fadeIn ${SHELL_CLASS[result.threatLevel]}`}
+      data-testid="scan-results"
+    >
+      <div
+        className={`rounded-xl border px-4 py-2 text-xs font-mono font-semibold ${completenessClass}`}
+        data-testid="completeness-badge"
+      >
+        Completeness: {result.completeness}
+        {result.completeness !== "COMPLETE" ? " — limited surface checks" : ""}
+      </div>
+
       <div
         className={`rounded-xl border px-4 py-3 ${VERDICT_CLASS[result.verdict]}`}
+        data-testid="verdict-banner"
       >
         <div className="flex items-start gap-3">
           {result.verdict === "DO_NOT_SIGN" ? (
@@ -65,7 +92,7 @@ export function ScanResults({ result, copied, onCopy }: Props) {
         </div>
         <button
           type="button"
-          onClick={() => onCopy(copyText)}
+          onClick={() => void onCopy(copyText)}
           className="bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-mono flex items-center transition"
         >
           {copied ? (
@@ -163,9 +190,6 @@ export function ScanResults({ result, copied, onCopy }: Props) {
             revoke.cash
           </a>{" "}
           · hardware-safe batch revoke via Rabby + Ledger.
-        </p>
-        <p>
-          Burner for ape risk · cold wallet for stack · never store a seed in cloud notes.
         </p>
       </div>
     </div>

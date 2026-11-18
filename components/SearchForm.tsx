@@ -22,7 +22,11 @@ export function SearchForm({
         <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
         <input
           type="text"
-          placeholder={`Enter ${chain.toUpperCase()} Target Address / Hash / Contract...`}
+          placeholder={
+            chain === "solana"
+              ? "Enter Solana wallet or program address (base58)…"
+              : `Enter ${chain.toUpperCase()} wallet or contract address (0x…)…`
+          }
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
           className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-purple-500 font-mono transition"

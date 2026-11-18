@@ -15,7 +15,7 @@ export function Header() {
         </p>
       </div>
       <a
-        href="https://github.com"
+        href="https://github.com/5pzf2hdmc9-lab/aegischain-risk-agent"
         target="_blank"
         rel="noreferrer"
         className="bg-slate-900 hover:bg-slate-800 border border-slate-800 px-4 py-2 rounded-xl text-xs font-mono flex items-center text-slate-300 transition shadow-md"
