@@ -1,0 +1,16 @@
+# AegisWeb3 — Agent Rules (mandatory)
+
+Before any code change, read `docs/PROJECT_MEMORY.md` end-to-end and treat it as the source of truth for architecture, APIs, env vars, and change history.
+
+## Hard constraints
+
+1. **Project memory first:** Always open and follow `docs/PROJECT_MEMORY.md` before editing files.
+2. **File size limit:** Keep every source file under **250 lines**. Split into `services/`, `components/`, and `lib/` when approaching the limit.
+3. **Never expose secrets to the browser:** API keys (Gemini, Alchemy/RPC, Supabase, or any other) must live only in server-side env vars (no `NEXT_PUBLIC_*` for secrets). Client code may call `/api/*` only.
+4. **Update memory after work:** At the end of every task, append a dated entry to `docs/PROJECT_MEMORY.md` describing what changed, why, and which files were touched.
+
+## Security defaults
+
+- All `/api/*` routes must enforce rate limiting and Zod/regex input validation.
+- Sanitize user-controlled strings before they enter LLM prompts (prompt-injection protection).
+- Prefer defensive, recruiter-safe UX: clear errors, no stack traces in the UI, no raw secret leakage in responses.

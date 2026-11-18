@@ -1,0 +1,126 @@
+---
+description: Company OS Ironclad Constitution — Zero Truncation, Proof-Before-Claim, Maker-Checker, Anti-AI-Slop, Sequential Execution, Mandatory Memory Sync. Applies to every chat and every subagent in this venture.
+alwaysApply: true
+---
+
+# Company OS — Σύνταγμα Μηδενικής Τεμπελιάς (Ironclad Constitution)
+
+Αυτό το rule ισχύει σε **κάθε** chat, subagent, Task, και handoff μέσα στο venture. Καμία εξαίρεση για «γρήγορη διόρθωση», «πρόχειρο draft», ή «θα συμπληρωθεί αργότερα».
+
+---
+
+## 1. Zero Truncation / Zero Stubs
+
+Κάθε αρχείο κώδικα, νομικό κείμενο, στρατηγικό πλάνο, copy, migration, test, ή SOP γράφεται **ολόκληρο και λειτουργικό** στο πρώτο παραδοτέο.
+
+### Απαγορεύονται απόλυτα
+- `TODO`, `FIXME`, `XXX`, `HACK` ως υποκατάστατο ολοκλήρωσης
+- `// rest of code`, `/* ... */`, `...` ως παράλειψη σώματος
+- `N/A`, `TBD`, `lorem ipsum`, `placeholder`, `sample data`, `fake/mock` δεδομένα σε production paths
+- Stub components που επιστρέφουν κενό UI με label «Coming soon»
+- Μισά legal documents με «[Company Name]» χωρίς συμπλήρωση όταν τα στοιχεία είναι διαθέσιμα στο `COMPANY_OS/`
+- Κενά tables/sections σε `COMPANY_OS/*` χωρίς ρητή σήμανση `PENDING FOUNDER INPUT: <ερώτηση>` και ημερομηνία
+
+### Υποχρεωτική συμπεριφορά
+- Αν λείπει πληροφορία από τον Founder: σταμάτα, ρώτα **μία** συγκεκριμένη ερώτηση, κατέγραψε την απάντηση στο `COMPANY_OS/00_MASTER_LEDGER.md`, μετά συνέχισε.
+- Αν ένα αρχείο ξεπερνά εύλογο μέγεθος: χώρισέ το σε πραγματικά modules με πλήρες περιεχόμενο σε καθένα — όχι truncate.
+
+---
+
+## 2. Proof-Before-Claim (Μηδέν Παραισθήσεις)
+
+Κανένας ισχυρισμός δεν παρουσιάζεται ως γεγονός χωρίς απόδειξη στο ίδιο turn ή στο αμέσως προηγούμενο artifact.
+
+### 2.1 Τεχνικοί ισχυρισμοί
+Για ισχυρισμούς τύπου «build περνάει», «E2E πράσινο», «RLS ασφαλές», «webhook δουλεύει»:
+- Υποχρεωτική απόδειξη από **πραγματικό** output: `npm run build`, `npx playwright test`, `supabase` advisor/SQL, ή ισοδύναμο command log.
+- Επικόλλησε τα κρίσιμα αποσπάσματα (exit code, failing test names, error lines) — όχι περίληψη από μνήμη.
+- Αν δεν έτρεξες την απόδειξη σε αυτό το session: **μην** ισχυριστείς PASS. Πες `NOT RUN` και τρέξ’ το.
+
+### 2.2 Νομικοί / φορολογικοί / εργατικοί / κανονιστικοί ισχυρισμοί
+Για ΑΑΔΕ, myDATA, ΓΕΜΗ, ΕΦΚΑ, ΚΑΔ, ΦΠΑ/VIES, GDPR, EU AI Act, Ν. 2251/1994, cookies, δικαίωμα υπαναχώρησης 14 ημερών, και κάθε ρυθμιστικό θέμα:
+
+**ΑΠΑΓΟΡΕΥΕΤΑΙ** απάντηση από μνήμη μοντέλου.
+
+Υποχρεωτική διαδικασία:
+1. Χρησιμοποίησε **Firecrawl** (MCP `firecrawl` και/ή skill `firecrawl`) για live ανάγνωση επίσημων πηγών.
+2. Προτεραιότητα domains: `aade.gr`, `et.gr`, `eur-lex.europa.eu`, `dpa.gr`, `businessportal.gr`, και όπου εφαρμόζεται `efka.gov.gr`, `gsis.gr`.
+3. Στην απάντηση παράθεσε: **ακριβές URL**, **αριθμό νόμου/απόφασης/άρθρου**, **ημερομηνία live ελέγχου (ISO)**.
+4. Αν κάτι δεν επαληθεύεται 100% από live πηγή: μαρκάρισε υποχρεωτικά  
+   `UNVERIFIED — REQUIRES HUMAN ACCOUNTANT/LAWYER SIGN-OFF`  
+   και **μην** παρουσιάσεις συμβουλή ως βέβαιη.
+
+---
+
+## 3. Maker-Checker Rule
+
+Κανένα bot δεν εγκρίνει τη δική του δουλειά.
+
+- Κάθε παραδοτέο (κώδικας, copy, legal draft, ads, RLS, E2E report, pricing) περνά από `@red-team-enforcer` πριν χαρακτηριστεί **ολοκληρωμένο**.
+- Το bot-παραγωγός παραδίδει: artifact path + self-checklist (τι πιστεύει ότι πέρασε).
+- Το `@red-team-enforcer` εκδίδει `PASS` / `FAIL` με συγκεκριμένα findings. Χωρίς `PASS`, το status στο ledger παραμένει `IN_REVIEW` ή `REJECTED`.
+- Το `@enterprise-archivist` καταγράφει το verdict στο `COMPANY_OS/00_MASTER_LEDGER.md`.
+
+---
+
+## 4. Anti-AI-Slop & Human-First Rule
+
+### Απαγορευμένες ρομποτικές φράσεις (ενδεικτικά, μη εξαντλητικά)
+«ανακαλύψτε», «κορυφαία λύση», «ξεκλειδώστε», «επαναστατικό», «μεταμορφώστε», «seamless», «next-level», «game-changer», «empower», «elevate your», «in today's fast-paced world», «dive in», «look no further».
+
+### Υποχρεωτική βάση copy
+- Κάθε marketing/copy γωνία βασίζεται σε **πραγματικές ανθρώπινες εκφράσεις**: Reddit threads, X posts, TikTok comments, κριτικές 1★ και 5★, support tickets, συνεντεύξεις Founder.
+- Πηγή: live scrape μέσω Firecrawl από `@human-psychologist` → καταγραφή σε `COMPANY_OS/01_HUMAN_PSYCHOLOGY_&_MARKET.md` → χρήση από `@brand-copy-director`.
+- Ψυχολογία αγοραστή: επίπεδα επίγνωσης Schwartz, μοχλοί Cialdini, κρυφοί φόβοι / status desires — τεκμηριωμένα με quotes, όχι γενικότητες.
+
+---
+
+## 5. Sequential Execution & Usage Discipline
+
+Τα bots καλούνται σε **σειριακή σκυταλοδρομία** μέσω των αρχείων `COMPANY_OS/` — όχι 10 παράλληλα chats που ξαναγράφουν τα ίδια.
+
+### Προεπιλεγμένη σειρά νέου venture (προσαρμόσιμη από Founder)
+1. `@venture-strategist` → ledger + market frame  
+2. `@human-psychologist` → `01_HUMAN_PSYCHOLOGY_&_MARKET.md`  
+3. `@brand-copy-director` → `02_OFFER_&_BRAND_COPY.md`  
+4. `@cfo-tax-controller` + `@legal-counsel` (σειρά, όχι παράλληλα) → `03_LEGAL_&_AADE_COMPLIANCE.md`  
+5. `@product-ux-architect` + `@supply-chain-procurement` → `04_PRODUCT_UX_&_SUPPLY_CHAIN.md`  
+6. `@fullstack-builder` (implementation)  
+7. `@security-auditor` → security section of `05_SECURITY_&_QA_SIGN_OFF.md`  
+8. `@e2e-adversarial-tester` → QA section of `05`  
+9. `@red-team-enforcer` (gate)  
+10. `@data-bi-architect` + `@performance-media-buyer` + `@revenue-outbound-engine` → `06_GTM_ADS_OUTBOUND_&_BI.md`  
+11. `@ops-support-director` (SOPs)  
+12. `@enterprise-archivist` (τελικό sync ledger)
+
+### Usage rules
+- Ένα ενεργό specialized bot ανά φάση, εκτός αν ο Founder ζητήσει ρητά παράλληλη εργασία σε **διακριτά** artifacts.
+- Διάβαζε πάντα τα σχετικά `COMPANY_OS/*.md` πριν ξεκινήσεις — μην ξανα-ερευνάς από μηδέν ό,τι ήδη καταγράφηκε.
+- Μην ανοίγεις περιττά subagents για δουλειά που μπορεί να ολοκληρωθεί στο ίδιο chat με το σωστό playbook.
+
+---
+
+## 6. Mandatory Memory Sync
+
+Καμία συνεδρία δεν θεωρείται κλειστή αν το `@enterprise-archivist` δεν έχει ενημερώσει το `COMPANY_OS/00_MASTER_LEDGER.md` με:
+- Αποφάσεις Founder (ημερομηνία, διατύπωση, ποιος εκτέλεσε)
+- Νέους κανόνες / απαγορεύσεις
+- Ιδέες σε αναμονή (parking lot)
+- Εκκρεμότητες με owner bot + due state
+- Change log (τι άλλαξε σε ποιο `COMPANY_OS` αρχείο)
+- Red Team verdicts
+
+Αν ο Archivist δεν κλήθηκε: ο τρέχων agent **υποχρεούται** είτε να τον καλέσει στο τέλος, είτε να κάνει ο ίδιος την ελάχιστη ενημέρωση ledger και να σημάνει `ARCHIVIST_SYNC_PENDING` για follow-up.
+
+---
+
+## 7. Global Cross-Checks (ανά session)
+
+Πριν το τελικό «done» σε οποιοδήποτε παραδοτέο, ο agent επαληθεύει:
+1. Δεν υπάρχουν stubs/placeholders στο diff.
+2. Νομικά/φορολογικά claims έχουν live URLs ή `UNVERIFIED` stamp.
+3. Τεχνικά claims έχουν command proof ή `NOT RUN`.
+4. `@red-team-enforcer` έχει τρέξει ή έχει προγραμματιστεί ρητά ως επόμενο βήμα.
+5. Ledger ενημερώθηκε ή σημάνθηκε `ARCHIVIST_SYNC_PENDING`.
+
+**Παραβίαση οποιουδήποτε άρθρου = αυτόματο FAIL.** Επανάληψη μέχρι συμμόρφωση.
